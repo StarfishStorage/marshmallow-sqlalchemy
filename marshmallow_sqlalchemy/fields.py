@@ -5,6 +5,7 @@ from marshmallow.utils import is_iterable_but_not_string
 
 from sqlalchemy.orm.exc import NoResultFound
 
+
 def get_primary_keys(model):
     """Get primary key properties for a SQLAlchemy model.
 
@@ -16,14 +17,17 @@ def get_primary_keys(model):
         for column in mapper.primary_key
     ]
 
+
 def get_schema_for_field(field):
     if hasattr(field, 'root'):  # marshmallow>=2.1
         return field.root
     else:
         return field.parent
 
+
 def ensure_list(value):
     return value if is_iterable_but_not_string(value) else [value]
+
 
 class Related(fields.Field):
     """Related data represented by a SQLAlchemy `relationship`. Must be attached
@@ -73,7 +77,7 @@ class Related(fields.Field):
         }
         return ret if len(ret) > 1 else list(ret.values())[0]
 
-    def _deserialize(self, value, *args, **kwargs):
+    def _deserialize(self, value, attr, data):
         if not isinstance(value, dict):
             if len(self.related_keys) != 1:
                 self.fail('invalid', value=value, keys=[prop.key for prop in self.related_keys])
@@ -97,5 +101,5 @@ class Related(fields.Field):
         except NoResultFound:
             # The related-object DNE in the DB, but we still want to deserialize it
             # ...perhaps we want to add it to the DB later
-            return self.related_model(**value)
+            return self.related_model(**value)  # pylint: disable=not-callable
         return result

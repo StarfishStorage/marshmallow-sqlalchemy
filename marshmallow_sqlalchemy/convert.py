@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
-import inspect
 import functools
-
+import inspect
 import uuid
+
 import marshmallow as ma
+import sqlalchemy as sa
 from marshmallow import validate, fields
 from sqlalchemy.dialects import postgresql, mysql, mssql
-import sqlalchemy as sa
 
-from .exceptions import ModelConversionError
-from .fields import Related
+from marshmallow_sqlalchemy.exceptions import ModelConversionError
+from marshmallow_sqlalchemy.fields import Related
+
 
 def _is_field(value):
     return (
         isinstance(value, type) and
         issubclass(value, fields.Field)
     )
+
 
 def _has_default(column):
     return (
@@ -24,11 +26,13 @@ def _has_default(column):
         _is_auto_increment(column)
     )
 
+
 def _is_auto_increment(column):
     return (
         column.table is not None and
         column is column.table._autoincrement_column
     )
+
 
 def _postgres_array_factory(converter, data_type):
     return functools.partial(
@@ -36,12 +40,14 @@ def _postgres_array_factory(converter, data_type):
         converter._get_field_class_for_data_type(data_type.item_type),
     )
 
-def _should_exclude_field(column, fields=None, exclude=None):
-    if fields and column.key not in fields:
+
+def _should_exclude_field(column, fields_=None, exclude=None):
+    if fields_ and column.key not in fields_:
         return True
     if exclude and column.key in exclude:
         return True
     return False
+
 
 class ModelConverter(object):
     """Class that converts a SQLAlchemy model into a dictionary of corresponding
@@ -86,12 +92,12 @@ class ModelConverter(object):
         else:
             return ma.Schema.TYPE_MAPPING
 
-    def fields_for_model(self, model, include_fk=False, fields=None, exclude=None, base_fields=None,
+    def fields_for_model(self, model, include_fk=False, fields_=None, exclude=None, base_fields=None,
                          dict_cls=dict):
         result = dict_cls()
         base_fields = base_fields or {}
         for prop in model.__mapper__.iterate_properties:
-            if _should_exclude_field(prop, fields=fields, exclude=exclude):
+            if _should_exclude_field(prop, fields_=fields_, exclude=exclude):
                 continue
             if hasattr(prop, 'columns'):
                 if not include_fk:
@@ -107,12 +113,12 @@ class ModelConverter(object):
                 result[prop.key] = field
         return result
 
-    def fields_for_table(self, table, include_fk=False, fields=None, exclude=None, base_fields=None,
+    def fields_for_table(self, table, include_fk=False, fields_=None, exclude=None, base_fields=None,
                          dict_cls=dict):
         result = dict_cls()
         base_fields = base_fields or {}
         for column in table.columns:
-            if _should_exclude_field(column, fields=fields, exclude=exclude):
+            if _should_exclude_field(column, fields_=fields_, exclude=exclude):
                 continue
             if not include_fk and column.foreign_keys:
                 continue
@@ -241,6 +247,7 @@ class ModelConverter(object):
         return {
             'validate': []
         }
+
 
 default_converter = ModelConverter()
 

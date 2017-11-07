@@ -184,6 +184,8 @@ class ModelSchema(with_metaclass(ModelSchemaMeta, ma.Schema)):
         :param instance: Optional existing instance to modify.
         """
         self.session = session or self.session
+        if not self.session:
+            raise ValueError('Deserialization requires a session')
         self.instance = instance or self.instance
         try:
             return self.load(data, *args, **kwargs)
@@ -192,4 +194,6 @@ class ModelSchema(with_metaclass(ModelSchemaMeta, ma.Schema)):
 
     def validate_with_session(self, data, session=None, *args, **kwargs):
         self.session = session or self.session
+        if not self.session:
+            raise ValueError('Validation requires a session')
         return self.validate(data, *args, **kwargs)

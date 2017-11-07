@@ -173,23 +173,19 @@ class ModelSchema(with_metaclass(ModelSchemaMeta, ma.Schema)):
             return instance
         return self.opts.model(**data)
 
-    def load(self, data, session=None, instance=None, *args, **kwargs):
+    def load_with_session(self, data, session=None, instance=None, *args, **kwargs):
         """Deserialize data to internal representation.
 
         :param session: Optional SQLAlchemy session.
         :param instance: Optional existing instance to modify.
         """
         self.session = session or self.session
-        if not self.session:
-            raise ValueError('Deserialization requires a session')
         self.instance = instance or self.instance
         try:
-            return super(ModelSchema, self).load(data, *args, **kwargs)
+            return self.load(data, *args, **kwargs)
         finally:
             self.instance = None
 
-    def validate(self, data, session=None, *args, **kwargs):
+    def validate_with_session(self, data, session=None, *args, **kwargs):
         self.session = session or self.session
-        if not self.session:
-            raise ValueError('Validation requires a session')
-        return super(ModelSchema, self).validate(data, *args, **kwargs)
+        return self.validate(data, *args, **kwargs)

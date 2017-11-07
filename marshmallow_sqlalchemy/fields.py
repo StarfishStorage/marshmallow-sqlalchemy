@@ -78,6 +78,8 @@ class Related(fields.Field):
             if len(self.related_keys) != 1:
                 self.fail('invalid', value=value, keys=[prop.key for prop in self.related_keys])
             value = {self.related_keys[0].key: value}
+        if self.session is None:
+            return self.related_model(**value)  # pylint: disable=not-callable
         query = self.session.query(self.related_model)
         try:
             if self.columns:
